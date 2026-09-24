@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Job Postings</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 20px; }
+  .container { max-width: 900px; margin: 0 auto; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+  .page-header h2 { margin: 0; color: #2c3e50; }
+  .add-job-link {
+    background: #2980b9; color: #fff; text-decoration: none; font-weight: 600;
+    padding: 10px 16px; border-radius: 6px;
+  }
+  .add-job-link:hover { background: #1f6690; }
+  .job-card {
+    background: #fff; border: 1px solid #dfe6ee; border-radius: 8px; padding: 18px; margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .job-card h3 { margin: 0 0 12px; color: #1f2937; }
+  .job-attributes { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .job-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px; }
+  .job-item strong { display: block; margin-bottom: 6px; color: #374151; }
+  .job-item .value { color: #111827; word-break: break-word; }
+  .empty-state, .error-state { color: #6b7280; text-align: center; padding: 30px 0; }
+  .error-state { color: #b3261e; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+  }
+  .badge-yes { background: #e6f4ea; color: #1e7d32; }
+  .badge-no { background: #fdecea; color: #b3261e; }
+  .embedding-block { border-top: 1px dashed #dfe6ee; margin-top: 14px; padding-top: 12px; }
+  .embedding-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #6b7280;
+    margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .embedding-values { display: flex; flex-wrap: wrap; gap: 6px; }
+  .embedding-chip {
+    background: #eef1fb; color: #2f279c; font-family: Consolas, monospace;
+    font-size: 11.5px; padding: 4px 8px; border-radius: 6px;
+  }
+  .embedding-empty { font-size: 12px; color: #6b7280; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h2>Job Postings</h2>
+    <a class="add-job-link" href="/static/job_posting.html">+ Post a new job</a>
+  </div>
+  <div id="jobListing"></div>
+</div>
+
+<script>
+  function escapeHtml(value) {
+    const element = document.createElement('div');
+    element.textContent = value ?? '';
+    return element.innerHTML;
+  }
+
+  function formatValue(value) {
+    if (value === null || value === undefined) return '\u2014';
+    if (Array.isArray(value)) return value.join(', ');
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  }
+
+  function embeddingBadge(hasEmbedding) {
+    return hasEmbedding
+      ? '<span class="badge badge-yes">Indexed</span>'
+      : '<span class="badge badge-no">Missing</span>';
+  }
+
+  function embeddingBlock(job) {
+    if (!job.has_embedding || !job.embedding_preview?.length) {
+      return `
+        <div class="embedding-block">
+          <div class="embedding-title">Embedding ${embeddingBadge(false)}</div>
+          <div class="embedding-empty">No vector indexed yet</div>
+        </div>
+      `;
+    }
+    const chips = job.embedding_preview
+      .map(value => `<span class="embedding-chip">${escapeHtml(value)}</span>`)
+      .join('');
+    return `
+      <div class="embedding-block">
+        <div class="embedding-title">
+          <span>Embedding ${embeddingBadge(true)} (dim ${escapeHtml(job.embedding_dim)})</span>
+        </div>
+        <div class="embedding-values">${chips}<span class="embedding-chip">...</span></div>
+      </div>
+    `;
+  }
+
+  function renderJobListing(jobs) {
+    const container = document.getElementById('jobListing');
+    container.innerHTML = '';
+
+    if (!jobs || jobs.length === 0) {
+      container.innerHTML = '<div class="empty-state">No job postings found.</div>';
+      return;
+    }
+
+    jobs.forEach(job => {
+      const details = job.details || {};
+      const card = document.createElement('div');
+      card.className = 'job-card';
+
+      const title = details.title || job.title || `Job #${job.id}`;
+      const heading = document.createElement('h3');
+      heading.textContent = title;
+      card.appendChild(heading);
+
+      const attrWrapper = document.createElement('div');
+      attrWrapper.className = 'job-attributes';
+
+      const meta = { ...details, is_active: job.is_active, emb_generated: job.emb_generated };
+      Object.entries(meta).forEach(([key, value]) => {
+        const item = document.createElement('div');
+        item.className = 'job-item';
+        item.innerHTML = `
+          <strong>${escapeHtml(key)}</strong>
+          <div class="value">${escapeHtml(formatValue(value))}</div>
+        `;
+        attrWrapper.appendChild(item);
+      });
+
+      card.appendChild(attrWrapper);
+      card.insertAdjacentHTML('beforeend', embeddingBlock(job));
+      container.appendChild(card);
+    });
+  }
+
+  async function fetchJobPostings() {
+    try {
+      const response = await fetch('/embeddings/jobs', { credentials: 'same-origin' });
+      if (!response.ok) {
+        document.getElementById('jobListing').innerHTML =
+          `<div class="error-state">Log in required to view this data (status ${response.status}).</div>`;
+        return;
+      }
+      const jobs = await response.json();
+      renderJobListing(jobs);
+    } catch (err) {
+      document.getElementById('jobListing').innerHTML = '<div class="error-state">Error loading job postings.</div>';
+      console.error(err);
+    }
+  }
+
+  fetchJobPostings();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Resume Download</title>
+</head>
+<body>
+	<form id="resume-form">
+		<label>
+			Resume key
+			<input id="resume-key" type="text" placeholder="resumes/example.pdf" required>
+		</label>
+		<label>
+			S3 bucket
+			<input id="bucket" type="text" placeholder="my-bucket" required>
+		</label>
+		<button type="submit">Get Resume</button>
+	</form>
+
+	<script>
+		document.getElementById("resume-form").addEventListener("submit", (event) => {
+			event.preventDefault();
+			const key = document.getElementById("resume-key").value.trim();
+			const bucket = document.getElementById("bucket").value.trim();
+			window.location.href = `/get_resume/${key.split("/").map(encodeURIComponent).join("/")}?bucket=${encodeURIComponent(bucket)}`;
+		});
+	</script>
+</body>
+</html>

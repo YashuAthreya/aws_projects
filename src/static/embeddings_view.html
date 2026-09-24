@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embeddings Viewer</title>
+<style>
+    :root {
+        --primary: #4338ca;
+        --primary-dark: #2f279c;
+        --accent: #2563eb;
+        --bg: #f4f6fb;
+        --card-bg: #ffffff;
+        --border: #e6e8f0;
+        --text: #1f2437;
+        --muted: #6b7280;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: Inter, 'Segoe UI', Arial, sans-serif;
+        background: var(--bg);
+        margin: 0;
+        color: var(--text);
+    }
+
+    .hero {
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: #fff;
+        padding: 42px 24px 64px;
+    }
+    .hero-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .hero h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        letter-spacing: -0.5px;
+    }
+    .hero p {
+        margin: 0;
+        color: #dfe4ff;
+        font-size: 14px;
+    }
+
+    .page-body {
+        max-width: 1200px;
+        margin: -40px auto 40px;
+        padding: 0 24px;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 8px 24px rgba(31, 36, 55, 0.08);
+    }
+    .stat-card .stat-value {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+    .stat-card .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    .stat-indexed .stat-value { color: #1e7d32; }
+    .stat-missing .stat-value { color: #b3261e; }
+
+    .panel {
+        background: var(--card-bg);
+        border-radius: 16px;
+        box-shadow: 0 12px 32px rgba(31, 36, 55, 0.08);
+        padding: 24px;
+    }
+
+    .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    .tabs {
+        display: flex;
+        gap: 8px;
+        background: #eef0fa;
+        padding: 4px;
+        border-radius: 10px;
+    }
+    .tab-btn {
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--primary);
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 9px 18px;
+        transition: background .15s ease;
+    }
+    .tab-btn.active {
+        background: var(--primary);
+        color: #fff;
+    }
+    .search-box {
+        flex: 1;
+        min-width: 220px;
+        max-width: 320px;
+    }
+    .search-box input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        outline: none;
+    }
+    .search-box input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+    .record-card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        transition: box-shadow .15s ease, transform .15s ease;
+    }
+    .record-card:hover {
+        box-shadow: 0 10px 24px rgba(31, 36, 55, 0.1);
+        transform: translateY(-2px);
+    }
+    .record-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+    .record-title {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    .record-subtitle {
+        font-size: 12px;
+        color: var(--muted);
+    }
+    .record-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+    .record-meta .meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .record-meta .meta-label {
+        color: var(--muted);
+    }
+    .record-meta .meta-value {
+        text-align: right;
+        word-break: break-word;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+    }
+    .badge-yes { background: #e6f4ea; color: #1e7d32; }
+    .badge-no { background: #fdecea; color: #b3261e; }
+
+    .embedding-block {
+        border-top: 1px dashed var(--border);
+        padding-top: 12px;
+        margin-top: 4px;
+    }
+    .embedding-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--muted);
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .embedding-values {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .embedding-chip {
+        background: #eef1fb;
+        color: var(--primary-dark);
+        font-family: Consolas, monospace;
+        font-size: 11.5px;
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+    .embedding-empty {
+        font-size: 12px;
+        color: var(--muted);
+        font-style: italic;
+    }
+
+    .empty-state, .error-state {
+        padding: 40px;
+        text-align: center;
+        color: var(--muted);
+        grid-column: 1 / -1;
+    }
+    .error-state { color: #b3261e; }
+    .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="hero-inner">
+        <h1>Profile &amp; Job Embeddings</h1>
+        <p>Postgres records joined with their FAISS vector embeddings, in one place.</p>
+    </div>
+</header>
+
+<div class="page-body">
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="panel">
+        <div class="toolbar">
+            <div class="tabs">
+                <button class="tab-btn active" id="usersTabBtn" onclick="switchTab('users')">Users</button>
+                <button class="tab-btn" id="jobsTabBtn" onclick="switchTab('jobs')">Job Postings</button>
+            </div>
+            <div class="search-box">
+                <input type="search" id="searchInput" placeholder="Search by name, email or title..." oninput="renderActiveTab()">
+            </div>
+        </div>
+
+        <div id="usersTab" class="card-grid"></div>
+        <div id="jobsTab" class="card-grid hidden"></div>
+    </div>
+</div>
+
+<script>
+    let activeTab = 'users';
+    let userRecords = [];
+    let jobRecords = [];
+
+    function escapeHtml(value) {
+        const element = document.createElement('div');
+        element.textContent = value ?? '';
+        return element.innerHTML;
+    }
+
+    function initials(name) {
+        const clean = (name || '').trim();
+        if (!clean) return '?';
+        return clean
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(part => part[0].toUpperCase())
+            .join('');
+    }
+
+    function embeddingBadge(hasEmbedding) {
+        return hasEmbedding
+            ? '<span class="badge badge-yes">Indexed</span>'
+            : '<span class="badge badge-no">Missing</span>';
+    }
+
+    function embeddingBlock(record) {
+        if (!record.has_embedding || !record.embedding_preview?.length) {
+            return `
+                <div class="embedding-block">
+                    <div class="embedding-title">Embedding</div>
+                    <div class="embedding-empty">No vector indexed yet</div>
+                </div>
+            `;
+        }
+        const chips = record.embedding_preview
+            .map(value => `<span class="embedding-chip">${escapeHtml(value)}</span>`)
+            .join('');
+        return `
+            <div class="embedding-block">
+                <div class="embedding-title">
+                    <span>Embedding (dim ${escapeHtml(record.embedding_dim)})</span>
+                </div>
+                <div class="embedding-values">${chips}<span class="embedding-chip">...</span></div>
+            </div>
+        `;
+    }
+
+    function userCard(user) {
+        return `
+            <div class="record-card">
+                <div class="record-head">
+                    <div class="avatar">${escapeHtml(initials(user.user_name))}</div>
+                    <div>
+                        <div class="record-title">${escapeHtml(user.user_name || 'Unnamed user')}</div>
+                        <div class="record-subtitle">User ID: ${escapeHtml(user.user_id)}</div>
+                    </div>
+                </div>
+                <div class="record-meta">
+                    <div class="meta-row"><span class="meta-label">Email</span><span class="meta-value">${escapeHtml(user.user_email || '\u2014')}</span></div>
+                    <div class="meta-row"><span class="meta-label">Mobile</span><span class="meta-value">${escapeHtml(user.mobile_number || '\u2014')}</span></div>
+                    <div class="meta-row"><span class="meta-label">Resume</span><span class="meta-value">${escapeHtml(user.resume_loc || '\u2014')}</span></div>
+                    <div class="meta-row"><span class="meta-label">Status</span><span class="meta-value">${embeddingBadge(user.has_embedding)}</span></div>
+                </div>
+                ${embeddingBlock(user)}
+            </div>
+        `;
+    }
+
+    function jobCard(job) {
+        return `
+            <div class="record-card">
+                <div class="record-head">
+                    <div class="avatar">${escapeHtml(initials(job.title || 'Job'))}</div>
+                    <div>
+                        <div class="record-title">${escapeHtml(job.title || 'Untitled posting')}</div>
+                        <div class="record-subtitle">Job ID: ${escapeHtml(job.id)}</div>
+                    </div>
+                </div>
+                <div class="record-meta">
+                    <div class="meta-row"><span class="meta-label">Active</span><span class="meta-value">${job.is_active ? 'Yes' : 'No'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Embedding generated</span><span class="meta-value">${job.emb_generated ? 'Yes' : 'No'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Status</span><span class="meta-value">${embeddingBadge(job.has_embedding)}</span></div>
+                </div>
+                ${embeddingBlock(job)}
+            </div>
+        `;
+    }
+
+    function renderStats() {
+        const usersIndexed = userRecords.filter(u => u.has_embedding).length;
+        const jobsIndexed = jobRecords.filter(j => j.has_embedding).length;
+
+        document.getElementById('statsRow').innerHTML = `
+            <div class="stat-card">
+                <div class="stat-value">${userRecords.length}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card stat-indexed">
+                <div class="stat-value">${usersIndexed}</div>
+                <div class="stat-label">Users Indexed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${jobRecords.length}</div>
+                <div class="stat-label">Total Jobs</div>
+            </div>
+            <div class="stat-card stat-indexed">
+                <div class="stat-value">${jobsIndexed}</div>
+                <div class="stat-label">Jobs Indexed</div>
+            </div>
+        `;
+    }
+
+    function switchTab(tab) {
+        activeTab = tab;
+        document.getElementById('usersTab').classList.toggle('hidden', tab !== 'users');
+        document.getElementById('jobsTab').classList.toggle('hidden', tab !== 'jobs');
+        document.getElementById('usersTabBtn').classList.toggle('active', tab === 'users');
+        document.getElementById('jobsTabBtn').classList.toggle('active', tab === 'jobs');
+        document.getElementById('searchInput').placeholder = tab === 'users'
+            ? 'Search by name or email...'
+            : 'Search by job title...';
+        renderActiveTab();
+    }
+
+    function renderActiveTab() {
+        const term = document.getElementById('searchInput').value.trim().toLowerCase();
+
+        if (activeTab === 'users') {
+            const container = document.getElementById('usersTab');
+            const filtered = userRecords.filter(u =>
+                !term ||
+                (u.user_name || '').toLowerCase().includes(term) ||
+                (u.user_email || '').toLowerCase().includes(term)
+            );
+            container.innerHTML = filtered.length
+                ? filtered.map(userCard).join('')
+                : '<div class="empty-state">No users found.</div>';
+        } else {
+            const container = document.getElementById('jobsTab');
+            const filtered = jobRecords.filter(j =>
+                !term || (j.title || '').toLowerCase().includes(term)
+            );
+            container.innerHTML = filtered.length
+                ? filtered.map(jobCard).join('')
+                : '<div class="empty-state">No job postings found.</div>';
+        }
+    }
+
+    async function fetchUserEmbeddings() {
+        try {
+            const response = await fetch('/embeddings/users', { credentials: 'same-origin' });
+            if (!response.ok) {
+                document.getElementById('usersTab').innerHTML =
+                    `<div class="error-state">Log in required to view this data (status ${response.status}).</div>`;
+                return;
+            }
+            userRecords = await response.json();
+        } catch (error) {
+            document.getElementById('usersTab').innerHTML =
+                `<div class="error-state">Error: ${escapeHtml(error.message)}</div>`;
+        }
+    }
+
+    async function fetchJobEmbeddings() {
+        try {
+            const response = await fetch('/embeddings/jobs', { credentials: 'same-origin' });
+            if (!response.ok) {
+                document.getElementById('jobsTab').innerHTML =
+                    `<div class="error-state">Log in required to view this data (status ${response.status}).</div>`;
+                return;
+            }
+            jobRecords = await response.json();
+        } catch (error) {
+            document.getElementById('jobsTab').innerHTML =
+                `<div class="error-state">Error: ${escapeHtml(error.message)}</div>`;
+        }
+    }
+
+    (async function init() {
+        await Promise.all([fetchUserEmbeddings(), fetchJobEmbeddings()]);
+        renderStats();
+        renderActiveTab();
+    })();
+</script>
+
+</body>
+</html>

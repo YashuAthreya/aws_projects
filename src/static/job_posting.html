@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Job Posting</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 20px; }
+  .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  h2 { text-align: center; color: #2c3e50; }
+  label { display: block; margin-top: 15px; font-weight: bold; color: #34495e; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .row { display: flex; gap: 15px; }
+  .row > div { flex: 1; }
+  .extra-field { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+  .extra-field input { flex: 1; }
+  .remove-btn { background: #e74c3c; color: #fff; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer; }
+  .add-btn { background: #27ae60; color: #fff; border: none; border-radius: 4px; padding: 8px 15px; cursor: pointer; margin-top: 10px; }
+  .add-btn:hover { background: #219150; }
+  .remove-btn:hover { background: #c0392b; }
+  .submit-btn { background: #2980b9; color: #fff; border: none; border-radius: 4px; padding: 12px; width: 100%; margin-top: 25px; font-size: 16px; cursor: pointer; }
+  .submit-btn:hover { background: #1f6690; }
+  #extraFieldsContainer { margin-top: 10px; }
+  .section-title { margin-top: 25px; border-top: 1px solid #eee; padding-top: 15px; color: #2c3e50; }
+  .view-listing-link { display: block; text-align: center; margin-top: 18px; color: #2980b9; font-weight: 600; text-decoration: none; }
+  .view-listing-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Job Posting Form</h2>
+  <form id="jobPostingForm">
+    <label for="title">Job Title</label>
+    <input type="text" id="title" name="title" placeholder="e.g. Senior Software Engineer" required>
+
+    <label for="company">Company</label>
+    <input type="text" id="company" name="company" placeholder="e.g. abc tech" required>
+
+    <div class="row">
+      <div>
+        <label for="expMin">Experience Min (years)</label>
+        <input type="number" id="expMin" name="expMin" placeholder="e.g. 5" min="0">
+      </div>
+      <div>
+        <label for="expMax">Experience Max (years)</label>
+        <input type="number" id="expMax" name="expMax" placeholder="e.g. 8" min="0">
+      </div>
+    </div>
+
+    <label for="mandatorySkills">Mandatory Skills (comma separated)</label>
+    <input type="text" id="mandatorySkills" name="mandatorySkills" placeholder="e.g. Java, Spring Boot, SQL">
+
+    <label for="optionalSkills">Optional Skills (comma separated)</label>
+    <input type="text" id="optionalSkills" name="optionalSkills" placeholder="e.g. AWS, Kubernetes">
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" placeholder="e.g. Design and develop scalable backend microservices, collaborate with cross-functional teams, and mentor junior engineers."></textarea>
+
+    <div class="row">
+      <div>
+        <label for="mode">Mode</label>
+        <select id="mode" name="mode">
+          <option value="">Select mode</option>
+          <option value="Remote">Remote</option>
+          <option value="Hybrid">Hybrid</option>
+          <option value="Onsite">Onsite</option>
+        </select>
+      </div>
+      <div>
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" placeholder="e.g. Bengaluru">
+      </div>
+    </div>
+
+    <label for="posted">Posted</label>
+    <input type="text" id="posted" name="posted" placeholder="e.g. 2 days ago">
+
+    <div class="section-title">
+      <label>Additional Fields</label>
+      <div id="extraFieldsContainer"></div>
+      <button type="button" class="add-btn" id="addFieldBtn">+ Add Field</button>
+    </div>
+
+    <button type="submit" class="submit-btn">Submit Job Posting</button>
+  </form>
+  <a class="view-listing-link" href="/static/job_postings_list.html">View all job postings &rarr;</a>
+</div>
+
+<script>
+  const extraFieldsContainer = document.getElementById('extraFieldsContainer');
+  const addFieldBtn = document.getElementById('addFieldBtn');
+
+  addFieldBtn.addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'extra-field';
+    row.innerHTML = `
+      <input type="text" class="extra-key" placeholder="Field name (e.g. benefits)">
+      <input type="text" class="extra-value" placeholder="Field value">
+      <button type="button" class="remove-btn">&times;</button>
+    `;
+    row.querySelector('.remove-btn').addEventListener('click', () => row.remove());
+    extraFieldsContainer.appendChild(row);
+  });
+
+  document.getElementById('jobPostingForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = {
+      title: document.getElementById('title').value,
+      company: document.getElementById('company').value,
+      expMin: Number(document.getElementById('expMin').value) || null,
+      expMax: Number(document.getElementById('expMax').value) || null,
+      mandatorySkills: document.getElementById('mandatorySkills').value
+        .split(',').map(s => s.trim()).filter(Boolean),
+      optionalSkills: document.getElementById('optionalSkills').value
+        .split(',').map(s => s.trim()).filter(Boolean),
+      description: document.getElementById('description').value,
+      mode: document.getElementById('mode').value,
+      location: document.getElementById('location').value,
+      posted: document.getElementById('posted').value
+    };
+
+    document.querySelectorAll('.extra-field').forEach(row => {
+      const key = row.querySelector('.extra-key').value.trim();
+      const value = row.querySelector('.extra-value').value.trim();
+      if (key) {
+        formData[key] = value;
+      }
+    });
+
+    try {
+      const response = await fetch('/job_posting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.detail || 'Request failed');
+      }
+      const result = await response.json();
+      alert('Job posting saved with id ' + result.id);
+      this.reset();
+      extraFieldsContainer.innerHTML = '';
+    } catch (err) {
+      alert('Unable to save job posting: ' + err.message);
+    }
+  });
+</script>
+</body>
+</html>

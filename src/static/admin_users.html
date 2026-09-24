@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Users</title>
+<style>
+  :root { --primary: #1f2937; --accent: #2563eb; --bg: #f4f6fb; --border: #e2e5ee; --muted: #6b7280; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); font-family: Inter, 'Segoe UI', Arial, sans-serif; color: var(--primary); }
+  header {
+    background: var(--primary); color: #fff; padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header a { color: #cbd5e1; text-decoration: none; font-size: 13px; }
+  header h1 { margin: 0; font-size: 18px; }
+  .page-body { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+  .search-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .search-row input {
+    flex: 1; min-width: 160px; padding: 9px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13px;
+  }
+  .search-row button {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 9px 16px; font-weight: 600; cursor: pointer;
+  }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; }
+  th { background: #eef1fb; color: var(--primary); }
+  .badge { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge-yes { background: #e6f4ea; color: #1e7d32; }
+  .badge-no { background: #fdecea; color: #b3261e; }
+  .empty-state, .error-state { text-align: center; padding: 30px; color: var(--muted); }
+  .error-state { color: #b3261e; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Users</h1>
+    <a href="/static/admin_dashboard.html">&larr; Back to dashboard</a>
+  </header>
+
+  <div class="page-body">
+    <div class="search-row">
+      <input type="search" id="nameFilter" placeholder="Name">
+      <input type="search" id="emailFilter" placeholder="Email">
+      <input type="search" id="mobileFilter" placeholder="Mobile number">
+      <button onclick="fetchUsers()">Search</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>User ID</th><th>Name</th><th>Email</th><th>Mobile</th><th>Resume</th><th>Embedding</th>
+        </tr>
+      </thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    function escapeHtml(value) {
+      const el = document.createElement('div');
+      el.textContent = value ?? '';
+      return el.innerHTML;
+    }
+
+    function embeddingBadge(hasEmbedding) {
+      return hasEmbedding
+        ? '<span class="badge badge-yes">Indexed</span>'
+        : '<span class="badge badge-no">Missing</span>';
+    }
+
+    async function fetchUsers() {
+      const tbody = document.getElementById('usersBody');
+      const params = new URLSearchParams({
+        name: document.getElementById('nameFilter').value.trim(),
+        email: document.getElementById('emailFilter').value.trim(),
+        mobile: document.getElementById('mobileFilter').value.trim()
+      });
+
+      try {
+        const response = await fetch(`/admin/users?${params}`, { credentials: 'same-origin' });
+
+        if (response.status === 401) {
+          window.location.href = '/static/admin_signin.html';
+          return;
+        }
+
+        if (!response.ok) {
+          tbody.innerHTML = `<tr><td class="error-state" colspan="6">Failed to load users.</td></tr>`;
+          return;
+        }
+
+        const users = await response.json();
+
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td class="empty-state" colspan="6">No users found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = users.map(user => `
+          <tr>
+            <td>${escapeHtml(user.user_id)}</td>
+            <td>${escapeHtml(user.user_name)}</td>
+            <td>${escapeHtml(user.user_email)}</td>
+            <td>${escapeHtml(user.mobile_number)}</td>
+            <td>${user.resume_loc ? `<a href="/pdf?key=${encodeURIComponent(user.resume_loc)}" target="_blank" rel="noopener">View</a>` : '\u2014'}</td>
+            <td>${embeddingBadge(user.has_embedding)}</td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        tbody.innerHTML = `<tr><td class="error-state" colspan="6">Could not connect to the server.</td></tr>`;
+      }
+    }
+
+    fetchUsers();
+  </script>
+</body>
+</html>

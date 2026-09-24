@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Post a New Job</title>
+<style>
+  :root { --primary: #1f2937; --accent: #2563eb; --bg: #f4f6fb; --border: #e2e5ee; --muted: #6b7280; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); font-family: Inter, 'Segoe UI', Arial, sans-serif; color: var(--primary); }
+  header {
+    background: var(--primary); color: #fff; padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header a { color: #cbd5e1; text-decoration: none; font-size: 13px; }
+  header h1 { margin: 0; font-size: 18px; }
+  .container { max-width: 700px; margin: 28px auto; background: #fff; padding: 28px 32px; border-radius: 10px; box-shadow: 0 6px 20px rgba(17,24,39,.06); }
+  label { display: block; margin-top: 14px; font-weight: 600; color: #374151; font-size: 13px; }
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%; padding: 8px 10px; margin-top: 5px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .row { display: flex; gap: 14px; }
+  .row > div { flex: 1; }
+  .submit-btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 11px;
+    width: 100%; margin-top: 22px; font-size: 15px; cursor: pointer; font-weight: 600;
+  }
+  .submit-btn:hover { background: #1d4ed8; }
+  .status-msg { margin-top: 12px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Insert Job Posting</h1>
+    <a href="/static/admin_dashboard.html">&larr; Back to dashboard</a>
+  </header>
+
+  <div class="container">
+    <form id="jobPostingForm">
+      <label for="title">Job Title</label>
+      <input type="text" id="title" required>
+
+      <label for="company">Company</label>
+      <input type="text" id="company" required>
+
+      <div class="row">
+        <div>
+          <label for="expMin">Experience Min (years)</label>
+          <input type="number" id="expMin" min="0">
+        </div>
+        <div>
+          <label for="expMax">Experience Max (years)</label>
+          <input type="number" id="expMax" min="0">
+        </div>
+      </div>
+
+      <label for="mandatorySkills">Mandatory Skills (comma separated)</label>
+      <input type="text" id="mandatorySkills" placeholder="e.g. Java, Spring Boot, SQL">
+
+      <label for="optionalSkills">Optional Skills (comma separated)</label>
+      <input type="text" id="optionalSkills" placeholder="e.g. AWS, Kubernetes">
+
+      <label for="description">Description</label>
+      <textarea id="description"></textarea>
+
+      <div class="row">
+        <div>
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="">Select mode</option>
+            <option value="Remote">Remote</option>
+            <option value="Hybrid">Hybrid</option>
+            <option value="Onsite">Onsite</option>
+          </select>
+        </div>
+        <div>
+          <label for="location">Location</label>
+          <input type="text" id="location">
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit Job Posting</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('jobPostingForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const statusMsg = document.getElementById('statusMsg');
+
+      const payload = {
+        title: document.getElementById('title').value,
+        company: document.getElementById('company').value,
+        expMin: Number(document.getElementById('expMin').value) || null,
+        expMax: Number(document.getElementById('expMax').value) || null,
+        mandatorySkills: document.getElementById('mandatorySkills').value.split(',').map(s => s.trim()).filter(Boolean),
+        optionalSkills: document.getElementById('optionalSkills').value.split(',').map(s => s.trim()).filter(Boolean),
+        description: document.getElementById('description').value,
+        mode: document.getElementById('mode').value,
+        location: document.getElementById('location').value
+      };
+
+      try {
+        const response = await fetch('/admin/job_postings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 401) {
+          window.location.href = '/static/admin_signin.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          statusMsg.textContent = errorData.detail || 'Unable to save the job posting.';
+          return;
+        }
+
+        const result = await response.json();
+        statusMsg.textContent = `Job posting saved with id ${result.id}.`;
+        this.reset();
+      } catch (error) {
+        console.error('Failed to submit job posting:', error);
+        statusMsg.textContent = 'Could not connect to the server.';
+      }
+    });
+  </script>
+</body>
+</html>

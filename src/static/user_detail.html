@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Applicant Details</title>
+<style>
+    body { background: #f4f6f8; color: #1f2937; font-family: Arial, sans-serif; margin: 0; }
+    main { margin: 48px auto; max-width: 680px; padding: 0 16px; }
+    .panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.15); padding: 28px; }
+    h1 { margin-top: 0; }
+    dl { display: grid; grid-template-columns: 150px 1fr; gap: 16px; margin: 24px 0; }
+    dt { color: #4b5563; font-weight: bold; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    a, .back { color: #075fc1; }
+    .back { display: inline-block; margin-bottom: 18px; }
+    .status { color: #4b5563; }
+</style>
+</head>
+<body>
+<main>
+    <a class="back" href="/static/list_users.html">Back to applicants</a>
+    <section class="panel" aria-live="polite">
+        <p class="status" id="status">Loading applicant...</p>
+        <div id="details" hidden>
+            <h1 id="fullName"></h1>
+            <dl>
+                <dt>Email</dt><dd id="email"></dd>
+                <dt>Mobile number</dt><dd id="mobile"></dd>
+                <dt>Resume</dt><dd><a id="resume" target="_blank" rel="noopener">View PDF</a></dd>
+            </dl>
+        </div>
+    </section>
+</main>
+<script>
+    const userId = new URLSearchParams(window.location.search).get('id');
+    const status = document.getElementById('status');
+
+    if (!userId) {
+        status.textContent = 'No applicant was selected.';
+    } else {
+        fetch(`/users/${encodeURIComponent(userId)}`)
+            .then(async response => {
+                if (!response.ok) throw new Error('Applicant not found.');
+                return response.json();
+            })
+            .then(user => {
+                document.getElementById('fullName').textContent = user.fullName;
+                document.getElementById('email').textContent = user.email;
+                document.getElementById('mobile').textContent = user.mobile;
+                const resume = document.getElementById('resume');
+                resume.href = user.resume_url;
+                status.hidden = true;
+                document.getElementById('details').hidden = false;
+            })
+            .catch(error => { status.textContent = error.message; });
+    }
+</script>
+</body>
+</html>

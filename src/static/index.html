@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerHub - Job Application Portal</title>
+<style>
+  :root {
+    --primary: #2557a7;
+    --primary-dark: #1a3f7a;
+    --bg: #f4f6f9;
+    --card-bg: #ffffff;
+    --border: #e0e4e8;
+    --text: #222;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* Header */
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header .logo {
+    font-size: 22px;
+    font-weight: 700;
+    padding: 16px 0;
+  }
+  header nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    display: flex;
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .search-box input {
+    border: none;
+    padding: 10px 12px;
+    width: 220px;
+    outline: none;
+    font-size: 14px;
+  }
+  .search-box button {
+    border: none;
+    background: var(--primary-dark);
+    color: #fff;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  .location-input {
+    border: none;
+    border-radius: 6px;
+    padding: 10px 12px;
+    width: 160px;
+    font-size: 14px;
+    outline: none;
+  }
+  .profile-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn {
+    background: #fff;
+    color: var(--primary);
+    border: none;
+    padding: 9px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .btn:hover { background: #eef2f8; }
+  .profile-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .profile-chip .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;    font-weight: 700;
+  }
+  .profile-area {
+    position: relative;
+  }
+  .profile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #fff;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    min-width: 180px;
+    padding: 6px;
+    z-index: 20;
+  }
+  .profile-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .profile-menu button:hover {
+    background: var(--bg);
+  }
+  .profile-menu .menu-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 4px;
+  }
+  .profile-menu .logout-item {
+    color: #b3261e;
+  }
+
+  /* Layout */
+  .container {
+    display: flex;
+    max-width: 1200px;
+    margin: 24px auto;
+    gap: 20px;
+    padding: 0 16px;
+    align-items: flex-start;
+  }
+
+  /* Sidebar Filters */
+  .filters {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    width: 280px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 16px;
+  }
+  .filters h3 {
+    margin-top: 0;
+    font-size: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+  }
+  .filter-group {
+    margin-bottom: 20px;
+  }
+  .filter-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+  .filter-group select,
+  .filter-group input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .checkbox-list label {
+    font-weight: 400;
+    text-transform: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+  }
+  .apply-filters-btn {
+    width: 100%;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .apply-filters-btn:hover { background: var(--primary-dark); }
+
+  /* Job Listings */
+  .listings {
+    flex: 1;
+  }
+  .listings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .listings-header h2 {
+    font-size: 18px;
+    margin: 0;
+  }
+  .sort-select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .job-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    transition: box-shadow .2s ease;
+  }
+  .job-card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .job-top {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .job-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin: 0 0 4px 0;
+  }
+  .job-company {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 8px 0;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin: 2px 4px 2px 0;
+  }
+  .tag-mode { background: #e6f4ea; color: #1e7d32; }
+  .tag-exp { background: #eaf1fb; color: var(--primary); }
+  .tag-loc { background: #fdf1e7; color: #b35900; }
+
+  .skills-row {
+    margin: 10px 0 6px 0;
+  }
+  .skills-row .label {
+    font-weight: 600;
+    font-size: 13px;
+    margin-right: 6px;
+    color: var(--muted);
+  }
+  .skill-chip {
+    display: inline-block;
+    background: #eef2f8;
+    color: var(--primary-dark);
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    margin: 2px 4px 2px 0;
+  }
+  .skill-chip.optional {
+    background: #f5f5f5;
+    color: var(--muted);
+  }
+
+  .job-desc {
+    font-size: 14px;
+    color: var(--text);
+    margin: 10px 0;
+    line-height: 1.5;
+  }
+
+  .job-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .job-meta {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .apply-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .apply-btn:hover { background: var(--primary-dark); }
+
+
+  .view-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .view-btn:hover { background: var(--primary-dark); }
+
+  /* Footer */
+  footer {
+    background: #1a1f29;
+    color: #cfd4dc;
+    margin-top: 40px;
+    padding: 32px 24px 16px 24px;
+  }
+  .footer-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+  }
+  .footer-grid h4 {
+    color: #fff;
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .footer-grid ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .footer-grid li {
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .footer-grid a {
+    color: #cfd4dc;
+    text-decoration: none;
+  }
+  .footer-grid a:hover { color: #fff; }
+  .footer-bottom {
+    max-width: 1200px;
+    margin: 24px auto 0 auto;
+    border-top: 1px solid #333;
+    padding-top: 14px;
+    font-size: 12px;
+    text-align: center;
+    color: #8a8f98;
+  }
+
+  @media (max-width: 850px) {
+    .container { flex-direction: column; }
+    .filters { width: 100%; position: static; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">CareerHub</div>
+  <nav>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search job title, keyword, or company">
+      <button onclick="applyFilters()">Search</button>
+    </div>
+    <input type="text" class="location-input" id="locationInput" placeholder="Location">
+    <div class="profile-area">
+      <button class="btn" id="loginBtn" onclick="window.location.href='/static/signin.html'">Log In</button>
+      <div class="profile-chip" id="profileChip" style="display:none;" onclick="toggleProfileMenu(event)">
+        <div class="avatar" id="profileAvatar">JD</div>
+        <span id="profileName">My Profile</span>
+      </div>
+      <div class="profile-menu" id="profileMenu" style="display:none;">
+        <button type="button" onclick="window.location.href='/static/user_detail.html'">Account</button>
+        <button type="button" onclick="window.location.href='/static/job_prof.html'">Settings</button>
+        <div class="menu-divider"></div>
+        <button type="button" class="logout-item" onclick="handleLogout()">Log out</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<!-- Main Container -->
+<div class="container">
+
+  <!-- Filters Sidebar -->
+  <aside class="filters">
+    <h3>Filter Jobs</h3>
+
+    <div class="filter-group">
+      <label for="expFilter">Experience Range (Years)</label>
+      <select id="expFilter">
+        <option value="all">All</option>
+        <option value="0-2">0 - 2</option>
+        <option value="2-5">2 - 5</option>
+        <option value="5-8">5 - 8</option>
+        <option value="8-12">8 - 12</option>
+        <option value="12-100">12+</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Technical Stack</label>
+      <div class="checkbox-list" id="stackFilter">
+        <label><input type="checkbox" value="Java"> Java</label>
+        <label><input type="checkbox" value="Python"> Python</label>
+        <label><input type="checkbox" value="React"> React</label>
+        <label><input type="checkbox" value="AWS"> AWS</label>
+        <label><input type="checkbox" value="Node.js"> Node.js</label>
+        <label><input type="checkbox" value="SQL"> SQL</label>
+        <label><input type="checkbox" value="Kubernetes"> Kubernetes</label>
+        <label><input type="checkbox" value=".NET"> .NET</label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label for="modeFilter">Work Mode</label>
+      <select id="modeFilter">
+        <option value="all">All</option>
+        <option value="WFH">Work From Home</option>
+        <option value="Hybrid">Hybrid</option>
+        <option value="Office">Office</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="locFilter">Office Location</label>
+      <select id="locFilter">
+        <option value="all">All</option>
+        <option value="Bengaluru">Bengaluru</option>
+        <option value="Hyderabad">Hyderabad</option>
+        <option value="Pune">Pune</option>
+        <option value="Remote">Remote</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="aiSearchInput">Describe what you're looking for</label>
+      <textarea id="aiSearchInput" rows="3" placeholder="e.g. backend engineer with Python and AWS experience building scalable APIs" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:14px; resize:vertical; font-family:inherit;"></textarea>
+      <button type="button" class="apply-filters-btn" style="margin-top:8px;" onclick="runSemanticSearch()">Find Similar Jobs</button>
+      <div id="aiSearchStatus" style="font-size:12px; color:var(--muted); margin-top:6px;"></div>
+    </div>
+
+    <div class="filter-group">
+      <label for="detailsFilter">Keyword (any job detail)</label>
+      <input type="text" id="detailsFilter" placeholder="e.g. benefits, team, shift, or any custom field">
+    </div>
+
+    <button class="apply-filters-btn" onclick="applyFilters()">Apply Filters</button>
+  </aside>
+
+  <!-- Job Listings -->
+  <main class="listings">
+    <div class="listings-header">
+      <h2 id="resultCount">Job Openings</h2>
+      <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+        <option value="recent">Sort: Most Recent</option>
+        <option value="expLow">Sort: Experience (Low-High)</option>
+        <option value="expHigh">Sort: Experience (High-Low)</option>
+        <option value="similarity" id="similarityOption" disabled>Sort by Profile Similarity (Log in required)</option>
+      </select>
+    </div>
+
+    <div id="jobList"></div>
+  </main>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h4>CareerHub</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>For Candidates</h4>
+      <ul>
+        <li><a href="#">Browse Jobs</a></li>
+        <li><a href="#">Create Profile</a></li>
+        <li><a href="#">Resume Tips</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>For Employers</h4>
+      <ul>
+        <li><a href="#">Post a Job</a></li>
+        <li><a href="#">Pricing</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    &copy; 2024 CareerHub. All rights reserved.
+  </div>
+</footer>
+
+<script>
+  const jobs = {{ jobs | tojson | safe }};
+
+  function createJobCard(job) {
+    const mandatoryHtml = job.mandatorySkills.map(s => `<span class="skill-chip">${s}</span>`).join('');
+    const optionalHtml = job.optionalSkills.map(s => `<span class="skill-chip optional">${s}</span>`).join('');
+    return `
+      <div class="job-card">
+        <div class="job-top">
+          <div>
+            <p class="job-title">${job.title}</p>
+            <p class="job-company">${job.company}</p>
+          </div>
+          <div>
+            <span class="tag tag-exp">${job.experience}</span>
+            <span class="tag tag-mode">${job.mode}</span>
+            <span class="tag tag-loc">${job.location}</span>
+          </div>
+        </div>
+
+        <div class="skills-row">
+          <span class="label">Mandatory Skills:</span>${mandatoryHtml}
+        </div>
+        <div class="skills-row">
+          <span class="label">Preferred Skills:</span>${optionalHtml}
+        </div>
+
+        <p class="job-desc">${job.description}</p>
+         
+
+        <div class="job-footer">
+          <span class="job-meta">Posted ${job.posted}</span>
+          <button class="view-btn" onclick="alert('Application submitted for ${job.title} at ${job.company}!')">View Details</button>
+          <button class="apply-btn" onclick="alert('Application submitted for ${job.title} at ${job.company}!')">Apply Now</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderJobs(jobArray) {
+    const jobList = document.getElementById('jobList');
+    jobList.innerHTML = jobArray.length
+      ? jobArray.map(createJobCard).join('')
+      : '<p style="text-align:center;color:#888;padding:40px 0;">No jobs match your filters. Try adjusting your search.</p>';
+    document.getElementById('resultCount').textContent = `Job Openings (${jobArray.length})`;
+  }
+
+  function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+    const locationTerm = document.getElementById('locationInput').value.trim().toLowerCase();
+    const expValue = document.getElementById('expFilter').value;
+    const modeValue = document.getElementById('modeFilter').value;
+    const locValue = document.getElementById('locFilter').value;
+    const sortValue = document.getElementById('sortSelect').value;
+    const detailsTerm = document.getElementById('detailsFilter').value.trim().toLowerCase();
+    const selectedStacks = Array.from(document.querySelectorAll('#stackFilter input:checked')).map(cb => cb.value);
+
+    let filtered = jobs.filter(job => {
+      const matchesSearch = !searchTerm ||
+        job.title.toLowerCase().includes(searchTerm) ||
+        job.company.toLowerCase().includes(searchTerm) ||
+        job.mandatorySkills.join(' ').toLowerCase().includes(searchTerm);
+
+      const matchesLocationInput = !locationTerm || job.location.toLowerCase().includes(locationTerm);
+
+      const matchesExp = expValue === 'all' || (() => {
+        const [min, max] = expValue.split('-').map(Number);
+        return job.expMin <= max && job.expMax >= min;
+      })();
+
+      const matchesMode = modeValue === 'all' || job.mode === modeValue;
+      const matchesLoc = locValue === 'all' || job.location === locValue;
+
+      const matchesStack = selectedStacks.length === 0 ||
+        selectedStacks.every(stack =>
+          [...job.mandatorySkills, ...job.optionalSkills].includes(stack)
+        );
+
+      // Generic full-text match against every field of the job's details
+      // JSONB payload, including any custom "Additional Fields" the poster added.
+      const matchesDetails = !detailsTerm ||
+        JSON.stringify(job).toLowerCase().includes(detailsTerm);
+
+      return matchesSearch && matchesLocationInput && matchesExp && matchesMode && matchesLoc && matchesStack && matchesDetails;
+    });
+
+    if (sortValue === 'expLow') filtered.sort((a, b) => a.expMin - b.expMin);
+    if (sortValue === 'expHigh') filtered.sort((a, b) => b.expMin - a.expMin);
+
+    const similarityOption = document.getElementById('similarityOption');
+    if (sortValue === 'similarity' && similarityOption && !similarityOption.disabled) {
+      filtered.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+    }
+
+    renderJobs(filtered);
+  }
+
+  function escapeAiText(value) {
+    const element = document.createElement('div');
+    element.textContent = value ?? '';
+    return element.innerHTML;
+  }
+
+  async function runSemanticSearch() {
+    const queryInput = document.getElementById('aiSearchInput');
+    const statusEl = document.getElementById('aiSearchStatus');
+    const query = queryInput.value.trim();
+
+    if (!query) {
+      statusEl.textContent = 'Please enter a description to search.';
+      return;
+    }
+
+    statusEl.textContent = 'Searching...';
+
+    try {
+      const response = await fetch(`/jobs/semantic-search?query=${encodeURIComponent(query)}`, {
+        method: 'GET',
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        statusEl.textContent = errorData.detail || 'Search failed. Please try again.';
+        return;
+      }
+
+      const data = await response.json();
+      renderJobs(data.results);
+      statusEl.innerHTML = data.results.length
+        ? `Showing top ${data.results.length} matches for "${escapeAiText(query)}". <a href="#" onclick="clearSemanticSearch(); return false;">Clear</a>`
+        : `No similar jobs found for "${escapeAiText(query)}". <a href="#" onclick="clearSemanticSearch(); return false;">Clear</a>`;
+    } catch (error) {
+      console.error('Semantic search failed:', error);
+      statusEl.textContent = 'Could not connect to the server.';
+    }
+  }
+
+  function clearSemanticSearch() {
+    document.getElementById('aiSearchInput').value = '';
+    document.getElementById('aiSearchStatus').textContent = '';
+    applyFilters();
+  }
+
+  function toggleProfileMenu(event) {
+    event.stopPropagation();
+    const profileMenu = document.getElementById('profileMenu');
+    profileMenu.style.display = profileMenu.style.display === 'none' ? 'block' : 'none';
+  }
+
+  document.addEventListener('click', (event) => {
+    const profileMenu = document.getElementById('profileMenu');
+    const profileChip = document.getElementById('profileChip');
+    if (profileMenu.style.display !== 'none' && !profileMenu.contains(event.target) && !profileChip.contains(event.target)) {
+      profileMenu.style.display = 'none';
+    }
+  });
+
+  async function handleLogout() {
+    document.getElementById('profileMenu').style.display = 'none';
+    try {
+      await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin'
+      });
+    } catch (error) {
+      console.error('Logout request failed:', error);
+    } finally {
+      showLoggedOutState();
+      window.location.href = '/';
+    }
+  }
+
+  function showLoggedInState(user) {
+    const loginBtn = document.getElementById('loginBtn');
+    const profileChip = document.getElementById('profileChip');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileName = document.getElementById('profileName');
+
+    const name = user.user_name || user.user_email || 'User';
+    const initials = name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0].toUpperCase())
+      .join('') || 'U';
+
+    profileAvatar.textContent = initials;
+    profileName.textContent = name;
+    loginBtn.style.display = 'none';
+    profileChip.style.display = 'flex';
+
+    const similarityOption = document.getElementById('similarityOption');
+    similarityOption.disabled = false;
+    similarityOption.textContent = 'Sort by Profile Similarity';
+
+    fetchMatchScores();
+  }
+
+  function showLoggedOutState() {
+    const loginBtn = document.getElementById('loginBtn');
+    const profileChip = document.getElementById('profileChip');
+    const profileMenu = document.getElementById('profileMenu');
+    loginBtn.style.display = 'inline-block';
+    profileChip.style.display = 'none';
+    profileMenu.style.display = 'none';
+
+    const sortSelect = document.getElementById('sortSelect');
+    const similarityOption = document.getElementById('similarityOption');
+    if (sortSelect.value === 'similarity') sortSelect.value = 'recent';
+    similarityOption.disabled = true;
+    similarityOption.textContent = 'Sort by Profile Similarity (Log in required)';
+  }
+
+  async function fetchMatchScores() {
+    try {
+      const response = await fetch('/jobs/match-scores', {
+        method: 'GET',
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const scores = data.scores || {};
+
+      jobs.forEach(job => {
+        job.matchScore = scores[job.id] ?? 0;
+      });
+
+      applyFilters();
+    } catch (error) {
+      console.error('Unable to fetch profile match scores:', error);
+    }
+  }
+
+  async function checkAuthState() {
+    try {
+      const response = await fetch('/auth/me', {
+        method: 'GET',
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        showLoggedOutState();
+        return;
+      }
+
+      const user = await response.json();
+      showLoggedInState(user);
+    } catch (error) {
+      console.error('Unable to verify login state:', error);
+      showLoggedOutState();
+    }
+  }
+
+  checkAuthState();
+
+  // Initial render
+  renderJobs(jobs);
+</script>
+
+</body>
+</html>

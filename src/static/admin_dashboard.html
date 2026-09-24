@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<style>
+  :root { --primary: #1f2937; --accent: #2563eb; --bg: #f4f6fb; --border: #e2e5ee; --muted: #6b7280; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); font-family: Inter, 'Segoe UI', Arial, sans-serif; color: var(--primary); }
+  header {
+    background: var(--primary); color: #fff; padding: 18px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 18px; }
+  header .admin-name { font-size: 13px; color: #cbd5e1; }
+  .logout-btn {
+    background: transparent; border: 1px solid #4b5563; color: #fff; border-radius: 6px;
+    padding: 7px 14px; cursor: pointer; font-size: 13px;
+  }
+  .logout-btn:hover { background: #374151; }
+  .page-body { max-width: 1000px; margin: 32px auto; padding: 0 20px; }
+  .card-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px;
+  }
+  .dash-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 22px;
+    box-shadow: 0 6px 18px rgba(17,24,39,.06); text-decoration: none; color: inherit;
+    display: block; cursor: pointer;
+  }
+  .dash-card:hover { box-shadow: 0 10px 24px rgba(17,24,39,.1); }
+  .dash-card h3 { margin: 0 0 6px; font-size: 16px; }
+  .dash-card p { margin: 0; font-size: 13px; color: var(--muted); }
+  #genStatus { margin-top: 20px; font-size: 13px; color: var(--muted); }
+  .auth-gate { max-width: 1000px; margin: 60px auto; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Admin Dashboard</h1>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <span class="admin-name" id="adminNameLabel"></span>
+      <button class="logout-btn" onclick="adminLogout()">Log out</button>
+    </div>
+  </header>
+
+  <div class="page-body" id="dashboardBody" style="display:none;">
+    <div class="card-grid">
+      <a class="dash-card" href="/static/admin_users.html">
+        <h3>Display Users</h3>
+        <p>View all registered candidates and their embedding status.</p>
+      </a>
+      <a class="dash-card" href="/static/admin_job_postings.html">
+        <h3>Display Job Postings</h3>
+        <p>View, edit, and manage all job postings.</p>
+      </a>
+      <a class="dash-card" href="/static/admin_job_posting_form.html">
+        <h3>Insert Job Posting</h3>
+        <p>Create a new job posting.</p>
+      </a>
+      <div class="dash-card" onclick="generateEmbeddings()">
+        <h3>Generate Embeddings</h3>
+        <p>Embed users and job postings that don't have one yet.</p>
+      </div>
+    </div>
+    <div id="genStatus"></div>
+  </div>
+
+  <div class="auth-gate" id="authGate">Checking admin session...</div>
+
+  <script>
+    async function checkAdminAuth() {
+      try {
+        const response = await fetch('/admin/auth/me', { credentials: 'same-origin' });
+        if (!response.ok) {
+          window.location.href = '/static/admin_signin.html';
+          return;
+        }
+        const admin = await response.json();
+        document.getElementById('adminNameLabel').textContent = admin.admin_name || '';
+        document.getElementById('authGate').style.display = 'none';
+        document.getElementById('dashboardBody').style.display = 'block';
+      } catch (error) {
+        console.error('Admin auth check failed:', error);
+        window.location.href = '/static/admin_signin.html';
+      }
+    }
+
+    async function adminLogout() {
+      try {
+        await fetch('/admin/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      } finally {
+        window.location.href = '/static/admin_signin.html';
+      }
+    }
+
+    async function generateEmbeddings() {
+      const statusEl = document.getElementById('genStatus');
+      statusEl.textContent = 'Generating embeddings for pending rows...';
+
+      try {
+        const response = await fetch('/admin/embeddings/generate', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          statusEl.textContent = errorData.detail || 'Failed to generate embeddings.';
+          return;
+        }
+
+        const data = await response.json();
+        statusEl.textContent =
+          `Done. Users indexed: ${data.users_indexed}, job postings indexed: ${data.job_postings_indexed}.`;
+      } catch (error) {
+        console.error('Generate embeddings failed:', error);
+        statusEl.textContent = 'Could not connect to the server.';
+      }
+    }
+
+    checkAdminAuth();
+  </script>
+</body>
+</html>

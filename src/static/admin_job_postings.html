@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Job Postings</title>
+<style>
+  :root { --primary: #1f2937; --accent: #2563eb; --bg: #f4f6fb; --border: #e2e5ee; --muted: #6b7280; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); font-family: Inter, 'Segoe UI', Arial, sans-serif; color: var(--primary); }
+  header {
+    background: var(--primary); color: #fff; padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  header a { color: #cbd5e1; text-decoration: none; font-size: 13px; }
+  header h1 { margin: 0; font-size: 18px; }
+  .page-body { max-width: 1000px; margin: 28px auto; padding: 0 20px; }
+  .job-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+    margin-bottom: 16px; box-shadow: 0 4px 14px rgba(17,24,39,.05);
+  }
+  .job-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .job-title { margin: 0 0 4px; font-size: 16px; }
+  .job-attributes { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; }
+  .job-item { background: #f9fafb; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+  .job-item strong { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+  .job-item .value { font-size: 13px; word-break: break-word; }
+  .badge { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .badge-yes { background: #e6f4ea; color: #1e7d32; }
+  .badge-no { background: #fdecea; color: #b3261e; }
+  .btn { border: none; border-radius: 6px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-edit { background: #eef1fb; color: var(--accent); }
+  .btn-save { background: var(--accent); color: #fff; }
+  .btn-cancel { background: #f3f4f6; color: var(--muted); }
+  .edit-form { display: none; margin-top: 14px; border-top: 1px dashed var(--border); padding-top: 14px; }
+  .edit-form.open { display: block; }
+  .edit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .edit-grid label { font-size: 12px; font-weight: 600; color: #374151; display: block; }
+  .edit-grid input, .edit-grid textarea { width: 100%; margin-top: 4px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+  .edit-actions { margin-top: 12px; display: flex; gap: 8px; }
+  .empty-state, .error-state { text-align: center; padding: 30px; color: var(--muted); }
+  .error-state { color: #b3261e; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Job Postings</h1>
+    <a href="/static/admin_dashboard.html">&larr; Back to dashboard</a>
+  </header>
+
+  <div class="page-body" id="jobListing"></div>
+
+  <script>
+    let jobsCache = [];
+
+    function escapeHtml(value) {
+      const el = document.createElement('div');
+      el.textContent = value ?? '';
+      return el.innerHTML;
+    }
+
+    function formatValue(value) {
+      if (value === null || value === undefined) return '\u2014';
+      if (Array.isArray(value)) return value.join(', ');
+      if (typeof value === 'object') return JSON.stringify(value);
+      return String(value);
+    }
+
+    function embeddingBadge(hasEmbedding) {
+      return hasEmbedding
+        ? '<span class="badge badge-yes">Indexed</span>'
+        : '<span class="badge badge-no">Missing</span>';
+    }
+
+    function toggleEdit(jobId) {
+      const form = document.getElementById(`edit-form-${jobId}`);
+      form.classList.toggle('open');
+    }
+
+    function renderJobCard(job) {
+      const details = job.details || {};
+      const attrEntries = { ...details, emb_generated: job.emb_generated };
+
+      const attrHtml = Object.entries(attrEntries).map(([key, value]) => `
+        <div class="job-item">
+          <strong>${escapeHtml(key)}</strong>
+          <div class="value">${escapeHtml(formatValue(value))}</div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="job-card">
+          <div class="job-top">
+            <div>
+              <h3 class="job-title">${escapeHtml(details.title || job.title || `Job #${job.id}`)}</h3>
+              <div>${job.is_active ? 'Active' : 'Inactive'} &middot; ${embeddingBadge(job.has_embedding)}</div>
+            </div>
+            <button class="btn btn-edit" onclick="toggleEdit(${job.id})">Edit</button>
+          </div>
+          <div class="job-attributes">${attrHtml}</div>
+
+          <div class="edit-form" id="edit-form-${job.id}">
+            <div class="edit-grid">
+              <label>Title<input type="text" id="title-${job.id}" value="${escapeHtml(details.title || '')}"></label>
+              <label>Company<input type="text" id="company-${job.id}" value="${escapeHtml(details.company || '')}"></label>
+              <label>Experience Min<input type="number" id="expMin-${job.id}" value="${escapeHtml(details.expMin ?? '')}"></label>
+              <label>Experience Max<input type="number" id="expMax-${job.id}" value="${escapeHtml(details.expMax ?? '')}"></label>
+              <label>Mandatory Skills (comma separated)<input type="text" id="mandatorySkills-${job.id}" value="${escapeHtml((details.mandatorySkills || []).join(', '))}"></label>
+              <label>Optional Skills (comma separated)<input type="text" id="optionalSkills-${job.id}" value="${escapeHtml((details.optionalSkills || []).join(', '))}"></label>
+              <label>Mode<input type="text" id="mode-${job.id}" value="${escapeHtml(details.mode || '')}"></label>
+              <label>Location<input type="text" id="location-${job.id}" value="${escapeHtml(details.location || '')}"></label>
+              <label style="grid-column: 1 / -1;">Description<textarea id="description-${job.id}" rows="3">${escapeHtml(details.description || '')}</textarea></label>
+              <label><input type="checkbox" id="isActive-${job.id}" ${job.is_active ? 'checked' : ''}> Active</label>
+            </div>
+            <div class="edit-actions">
+              <button class="btn btn-save" onclick="saveJob(${job.id})">Save changes</button>
+              <button class="btn btn-cancel" onclick="toggleEdit(${job.id})">Cancel</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderJobListing(jobs) {
+      const container = document.getElementById('jobListing');
+      if (!jobs || jobs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No job postings found.</div>';
+        return;
+      }
+      container.innerHTML = jobs.map(renderJobCard).join('');
+    }
+
+    async function fetchJobPostings() {
+      const container = document.getElementById('jobListing');
+      try {
+        const response = await fetch('/admin/job_postings', { credentials: 'same-origin' });
+
+        if (response.status === 401) {
+          window.location.href = '/static/admin_signin.html';
+          return;
+        }
+
+        if (!response.ok) {
+          container.innerHTML = '<div class="error-state">Failed to load job postings.</div>';
+          return;
+        }
+
+        jobsCache = await response.json();
+        renderJobListing(jobsCache);
+      } catch (error) {
+        console.error('Failed to load job postings:', error);
+        container.innerHTML = '<div class="error-state">Could not connect to the server.</div>';
+      }
+    }
+
+    async function saveJob(jobId) {
+      const payload = {
+        title: document.getElementById(`title-${jobId}`).value,
+        company: document.getElementById(`company-${jobId}`).value,
+        expMin: document.getElementById(`expMin-${jobId}`).value,
+        expMax: document.getElementById(`expMax-${jobId}`).value,
+        mandatorySkills: document.getElementById(`mandatorySkills-${jobId}`).value.split(',').map(s => s.trim()).filter(Boolean),
+        optionalSkills: document.getElementById(`optionalSkills-${jobId}`).value.split(',').map(s => s.trim()).filter(Boolean),
+        mode: document.getElementById(`mode-${jobId}`).value,
+        location: document.getElementById(`location-${jobId}`).value,
+        description: document.getElementById(`description-${jobId}`).value,
+        is_active: document.getElementById(`isActive-${jobId}`).checked
+      };
+
+      try {
+        const response = await fetch(`/admin/job_postings/${jobId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 401) {
+          window.location.href = '/static/admin_signin.html';
+          return;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          alert(errorData.detail || 'Failed to update job posting.');
+          return;
+        }
+
+        await fetchJobPostings();
+      } catch (error) {
+        console.error('Failed to update job posting:', error);
+        alert('Could not connect to the server.');
+      }
+    }
+
+    fetchJobPostings();
+  </script>
+</body>
+</html>

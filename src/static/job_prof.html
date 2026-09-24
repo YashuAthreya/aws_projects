@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Job Profile</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; }
+  .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  h1 { text-align: center; color: #333; }
+  .form-group { margin-bottom: 18px; }
+  label { display: block; font-weight: bold; margin-bottom: 6px; color: #444; }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px;
+  }
+  textarea { resize: vertical; }
+  .row { display: flex; gap: 15px; }
+  .row .form-group { flex: 1; }
+  .checklist { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; border: 1px solid #ddd; padding: 12px; border-radius: 4px; }
+  .checklist label { font-weight: normal; display: flex; align-items: center; gap: 6px; margin: 0; }
+  .cert-entry { display: flex; gap: 8px; margin-bottom: 8px; }
+  .cert-entry input { flex: 1; }
+  .cert-entry button { background: #e74c3c; color: #fff; border: none; border-radius: 4px; padding: 0 12px; cursor: pointer; }
+  #addCertBtn { background: #3498db; color: #fff; border: none; border-radius: 4px; padding: 8px 14px; cursor: pointer; margin-top: 4px; }
+  .submit-btn { width: 100%; background: #2ecc71; color: #fff; border: none; padding: 12px; font-size: 16px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+  .submit-btn:hover { background: #27ae60; }
+  #addCertBtn:hover { background: #2980b9; }
+  small.hint { color: #777; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Job Profile & Preferences</h1>
+  <form id="jobProfileForm">
+
+    <div class="form-group">
+      <label for="designation">Current Employement Status</label>
+      <select id="designation" name="designation" required>
+        <option value="">-- Select --</option>
+        <option value="working">Working</option>
+        <option value="student">Student</option>
+        <option value="searching">Searching as Fresher</option>
+        <option value="previously_worked">Previously Worked</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label for="expYears">Experience (Years)</label>
+        <input type="number" id="expYears" name="expYears" min="0" placeholder="Years">
+      </div>
+      <div class="form-group">
+        <label for="expMonths">Experience (Months)</label>
+        <input type="number" id="expMonths" name="expMonths" min="0" max="11" placeholder="Months">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="dob">Date of Birth</label>
+      <input type="date" id="dob" name="dob" required>
+    </div>
+
+    <div class="form-group">
+      <label for="education">Highest Education</label>
+      <select id="education" name="education" required>
+        <option value="">-- Select --</option>
+        <option value="high_school">High School</option>
+        <option value="diploma">Diploma</option>
+        <option value="bachelors">Bachelor's Degree</option>
+        <option value="masters">Master's Degree</option>
+        <option value="phd">PhD</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="achievements">Achievements</label>
+      <textarea id="achievements" name="achievements" rows="3" placeholder="Mention notable achievements, awards, publications, etc."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Certifications</label>
+      <div id="certContainer">
+        <div class="cert-entry">
+          <input type="text" name="certifications[]" placeholder="e.g. AWS Certified Solutions Architect">
+          <button type="button" onclick="removeCert(this)">✕</button>
+        </div>
+      </div>
+      <button type="button" id="addCertBtn" onclick="addCert()">+ Add Certification</button>
+    </div>
+
+    <div class="form-group">
+      <label>Skillset</label>
+      <div class="checklist" id="skillChecklist">
+        <label><input type="checkbox" name="skills[]" value="JavaScript"> JavaScript</label>
+        <label><input type="checkbox" name="skills[]" value="Python"> Python</label>
+        <label><input type="checkbox" name="skills[]" value="Java"> Java</label>
+        <label><input type="checkbox" name="skills[]" value="C++"> C++</label>
+        <label><input type="checkbox" name="skills[]" value="C#"> C#</label>
+        <label><input type="checkbox" name="skills[]" value="Go"> Go</label>
+        <label><input type="checkbox" name="skills[]" value="Ruby"> Ruby</label>
+        <label><input type="checkbox" name="skills[]" value="PHP"> PHP</label>
+        <label><input type="checkbox" name="skills[]" value="TypeScript"> TypeScript</label>
+        <label><input type="checkbox" name="skills[]" value="React"> React</label>
+        <label><input type="checkbox" name="skills[]" value="Angular"> Angular</label>
+        <label><input type="checkbox" name="skills[]" value="Vue.js"> Vue.js</label>
+        <label><input type="checkbox" name="skills[]" value="Node.js"> Node.js</label>
+        <label><input type="checkbox" name="skills[]" value="Django"> Django</label>
+        <label><input type="checkbox" name="skills[]" value="Flask"> Flask</label>
+        <label><input type="checkbox" name="skills[]" value="Spring Boot"> Spring Boot</label>
+        <label><input type="checkbox" name="skills[]" value="AWS"> AWS</label>
+        <label><input type="checkbox" name="skills[]" value="Azure"> Azure</label>
+        <label><input type="checkbox" name="skills[]" value="GCP"> GCP</label>
+        <label><input type="checkbox" name="skills[]" value="Docker"> Docker</label>
+        <label><input type="checkbox" name="skills[]" value="Kubernetes"> Kubernetes</label>
+        <label><input type="checkbox" name="skills[]" value="SQL"> SQL</label>
+        <label><input type="checkbox" name="skills[]" value="MongoDB"> MongoDB</label>
+        <label><input type="checkbox" name="skills[]" value="PostgreSQL"> PostgreSQL</label>
+        <label><input type="checkbox" name="skills[]" value="MySQL"> MySQL</label>
+        <label><input type="checkbox" name="skills[]" value="Redis"> Redis</label>
+        <label><input type="checkbox" name="skills[]" value="Git"> Git</label>
+        <label><input type="checkbox" name="skills[]" value="CI/CD"> CI/CD</label>
+        <label><input type="checkbox" name="skills[]" value="Machine Learning"> Machine Learning</label>
+        <label><input type="checkbox" name="skills[]" value="Data Analysis"> Data Analysis</label>
+        <label><input type="checkbox" name="skills[]" value="DevOps"> DevOps</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="resume">Upload Resume</label>
+      <input type="file" id="resume" name="resume" accept="application/pdf,.pdf">
+      <small class="hint">PDF only, up to 200 KB and 4 pages</small>
+    </div>
+
+    <div class="form-group">
+      <label for="profileSummary">Profile Summary & Preferences</label>
+      <textarea id="profileSummary" name="profileSummary" rows="4"
+        placeholder="Best describe yourself and your preferences to highlight your profile and catch a recruiter's attention..."></textarea>
+    </div>
+
+    <button type="submit" class="submit-btn">Submit Profile</button>
+  </form>
+</div>
+
+<script>
+  function addCert() {
+    const container = document.getElementById('certContainer');
+    const entry = document.createElement('div');
+    entry.className = 'cert-entry';
+    entry.innerHTML = `
+      <input type="text" name="certifications[]" placeholder="e.g. Google Cloud Professional">
+      <button type="button" onclick="removeCert(this)">✕</button>
+    `;
+    container.appendChild(entry);
+  }
+
+  function removeCert(btn) {
+    const container = document.getElementById('certContainer');
+    if (container.children.length > 1) {
+      btn.parentElement.remove();
+    }
+  }
+
+  document.getElementById('jobProfileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user_id');
+
+    if (!userId) {
+      alert('Missing user ID. Please start registration again.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/complete_reg?user_id=${encodeURIComponent(userId)}`, {
+        method: 'POST',
+        body: formData
+      });
+      console.log('Response status:', response.status);
+      console.log('Response =', response);
+
+      const result = await response.json();
+      console.log('response.json() done');
+
+      if (!response.ok) {
+        throw new Error(result.detail || 'Profile submission failed.');
+      }
+
+      console.log('Job Profile Data:', result);
+      alert('Profile submitted successfully!');
+      window.location.href = '/static/index.html';
+    } catch (error) {
+      console.error(error);
+      alert(error.message || 'Something went wrong while submitting the profile.');
+    }
+  });
+</script>
+</body>
+</html>
